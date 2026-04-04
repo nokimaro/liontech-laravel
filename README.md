@@ -100,6 +100,26 @@ class PaymentController extends Controller
 }
 ```
 
+### Multiple Accounts (Multi-tenant)
+
+The service provider registers a single `Client` instance from your config — sufficient for most applications. If you need multiple accounts (e.g. each tenant has their own credentials), instantiate the SDK client directly:
+
+```php
+use Nokimaro\LionTech\Client;
+
+// Create a client for a specific tenant
+$client = new Client(
+    accessToken: $tenant->liontech_access_token,
+    refreshToken: $tenant->liontech_refresh_token,
+    baseUrl: config('liontech.base_url'),
+    secureUrl: config('liontech.secure_url'),
+);
+
+$order = $client->orders()->create($request);
+```
+
+This bypasses the container singleton entirely and gives full control over credentials per request or per tenant.
+
 ### Webhook Verification
 
 ```php
