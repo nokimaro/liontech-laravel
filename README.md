@@ -16,7 +16,7 @@ Laravel integration for the [LionTech Payment Gateway](https://liontechnology.ai
 - **Dependency Injection**: All API clients registered as singletons in the container
 - **Facade**: Static access to the full SDK via `LionTech::` facade
 - **Config Helper**: Environment-based configuration with validation
-- **Deferred Provider**: Implements `DeferrableProvider` for optimal performance
+- **Eager Provider**: All bindings registered upfront for reliable config resolution
 - **Secure**: Webhook signature verification and RSA card encryption via the SDK
 
 ## Requirements
