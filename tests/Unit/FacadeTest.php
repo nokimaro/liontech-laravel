@@ -65,6 +65,14 @@ it('can access signature client through facade', function (): void {
     expect(LionTech::signature())->toBeInstanceOf(SignatureClient::class);
 });
 
+it('facade root is the same instance as container resolution', function (): void {
+    $fromContainer = app(Client::class);
+    $fromFacade = LionTech::getFacadeRoot();
+
+    expect($fromFacade)
+        ->toBe($fromContainer);
+});
+
 it('returns same instance on repeated calls', function (): void {
     $instance1 = LionTech::auth();
     $instance2 = LionTech::auth();

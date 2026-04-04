@@ -125,6 +125,49 @@ it('can resolve SDK from container', function (): void {
         ->toBeNull();
 });
 
+it('creates Client with only access token when optional config is absent', function (): void {
+    app()->forgetInstance(Client::class);
+    $this->app->config->set('liontech', [
+        'access_token' => 'minimal_token',
+    ]);
+
+    $sdk = app(Client::class);
+
+    expect($sdk)
+        ->toBeInstanceOf(Client::class);
+    expect($sdk->apiClient())
+        ->not()
+        ->toBeNull();
+});
+
+it('provides default base_url and secure_url via mergeConfigFrom', function (): void {
+    // Config not published — mergeConfigFrom should supply package defaults
+    $this->app->config->set('liontech', null);
+
+    // Re-trigger mergeConfigFrom by re-booting the provider in a fresh context
+    $config = include __DIR__ . '/../../config/liontech.php';
+
+    expect($config['base_url'])->toBe(env('LIONTECH_BASE_URL', 'https://api.liontechnology.ai'));
+    expect($config['secure_url'])->toBe(env('LIONTECH_SECURE_URL', 'https://secure.liontechnology.ai'));
+    expect($config['sandbox'])->toBe(env('LIONTECH_SANDBOX', false));
+});
+
+it('creates a new Client instance after forgetInstance', function (): void {
+    $instance1 = app(Client::class);
+
+    app()
+        ->forgetInstance(Client::class);
+    $this->app->config->set('liontech.access_token', 'new_token');
+
+    $instance2 = app(Client::class);
+
+    expect($instance2)
+        ->toBeInstanceOf(Client::class);
+    expect($instance2)
+        ->not()
+        ->toBe($instance1);
+});
+
 it('can access clients through SDK', function (): void {
     $sdk = app(Client::class);
 

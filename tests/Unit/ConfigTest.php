@@ -37,6 +37,11 @@ it('detects unconfigured SDK when access token is missing', function (): void {
     expect(LionTechConfig::isConfigured())->toBeFalse();
 });
 
+it('detects unconfigured SDK when access token is empty string', function (): void {
+    $this->app->config->set('liontech.access_token', '');
+    expect(LionTechConfig::isConfigured())->toBeFalse();
+});
+
 it('detects sandbox mode when sandbox config is true', function (): void {
     $this->app->config->set('liontech.sandbox', true);
     expect(LionTechConfig::isSandbox())->toBeTrue();
@@ -44,6 +49,13 @@ it('detects sandbox mode when sandbox config is true', function (): void {
 
 it('detects production mode when sandbox config is false', function (): void {
     $this->app->config->set('liontech.sandbox', false);
+    expect(LionTechConfig::isSandbox())->toBeFalse();
+});
+
+it('detects production mode when sandbox key is absent from config', function (): void {
+    $this->app->config->set('liontech', [
+        'access_token' => 'token',
+    ]);
     expect(LionTechConfig::isSandbox())->toBeFalse();
 });
 
@@ -80,6 +92,11 @@ it('returns PEM content as-is when key is not a file path', function (): void {
     $key = LionTechConfig::getWebhookPublicKey();
     expect($key)
         ->toBe($pemContent);
+});
+
+it('returns empty string when key config value is empty string', function (): void {
+    $this->app->config->set('liontech.webhook_public_key', '');
+    expect(LionTechConfig::getWebhookPublicKey())->toBe('');
 });
 
 it('throws ErrorException when key file cannot be read', function (): void {

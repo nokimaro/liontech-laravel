@@ -36,6 +36,8 @@ it('config file has correct structure', function (): void {
     expect($config)
         ->toHaveKey('secure_url');
     expect($config)
+        ->toHaveKey('sandbox');
+    expect($config)
         ->toHaveKey('webhook_public_key');
     expect($config)
         ->toHaveKey('card_encryption_public_key');
