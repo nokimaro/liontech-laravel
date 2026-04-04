@@ -1,7 +1,28 @@
 <?php
 
+// Advanced example: direct card payments (server-side card encryption).
+// copy to app/Http/Controllers/PaymentController.php
+//
+// Use this only if you need your own payment form with card fields.
+// For most integrations, use OrderController — create an order and
+// redirect the customer to the LionTech hosted payment page instead.
+//
+// Card encryption flow:
+//   Card data (PAN, CVV, expiry) is encrypted server-side by CardEncryptor
+//   before being sent to the LionTech API. CardEncryptor is automatically
+//   injected by Laravel's service container — configure the public key in .env:
+//   LIONTECH_CARD_ENCRYPTION_PUBLIC_KEY=/path/to/card-public.pem
+//
+// Routes (routes/api.php):
+//   Route::post('/payments', [PaymentController::class, 'create']);
+//   Route::get('/payments/{paymentId}', [PaymentController::class, 'show']);
+//   Route::post('/payments/{paymentId}/confirm', [PaymentController::class, 'confirm']);
+
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Nokimaro\LionTech\Exceptions\Validation\ValidationException;
 use Nokimaro\LionTech\Http\ApiExceptionMapper;
@@ -21,10 +42,7 @@ class PaymentController extends Controller
     ) {
     }
 
-    /**
-     * Create a new payment with card data
-     */
-    public function create(Request $request)
+    public function create(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'amount' => 'required|numeric|min:0.01',
@@ -83,28 +101,20 @@ class PaymentController extends Controller
         }
     }
 
-    /**
-     * Get payment details
-     */
-    public function show(string $paymentId)
+    public function show(string $paymentId): JsonResponse
     {
         $payment = LionTech::payments()->get($paymentId);
 
         return response()->json([
-            'success' => true,
             'payment' => $payment,
         ]);
     }
 
-    /**
-     * Confirm an authorized payment
-     */
-    public function confirm(string $paymentId)
+    public function confirm(string $paymentId): JsonResponse
     {
         $payment = LionTech::payments()->confirm($paymentId);
 
         return response()->json([
-            'success' => true,
             'payment' => $payment,
         ]);
     }

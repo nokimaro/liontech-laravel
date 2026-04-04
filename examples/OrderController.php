@@ -1,9 +1,26 @@
 <?php
 
+// Example: copy to app/Http/Controllers/OrderController.php
+//
+// Typical integration flow:
+//   1. create() — create an order, redirect customer to payUrl
+//   2. Customer pays on LionTech's hosted page
+//   3. LionTech redirects to successUrl / declineUrl
+//   4. LionTech sends a webhook — handle it in WebhookController
+//
+// Routes (routes/api.php or routes/web.php):
+//   Route::post('/orders', [OrderController::class, 'create']);
+//   Route::get('/orders/{orderId}', [OrderController::class, 'show']);
+//   Route::post('/orders/{orderId}/cancel', [OrderController::class, 'cancel']);
+//   Route::post('/refunds', [OrderController::class, 'refund']);
+
+declare(strict_types=1);
+
 namespace App\Http\Controllers;
 
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Nokimaro\LionTech\Laravel\Config\LionTechConfig;
 use Nokimaro\LionTech\Laravel\Facades\LionTech;
 use Nokimaro\LionTech\Requests\CreateOrderRequest;
 use Nokimaro\LionTech\Requests\CreateRefundRequest;
@@ -14,68 +31,61 @@ use Nokimaro\LionTech\ValueObjects\Money;
 class OrderController extends Controller
 {
     /**
-     * Create a new order
+     * Create an order and redirect the customer to the LionTech payment page.
      */
-    public function create(Request $request)
+    public function create(Request $request): RedirectResponse
     {
         $validated = $request->validate([
             'amount' => 'required|numeric|min:0.01',
             'description' => 'required|string',
             'customer_email' => 'nullable|email',
-            'customer_phone' => 'nullable|string',
-            'success_url' => 'required|url',
-            'decline_url' => 'required|url',
-            'webhook_url' => 'nullable|url',
         ]);
 
         $order = LionTech::orders()->create(new CreateOrderRequest(
             amount: new Money((string) $validated['amount'], Currency::USD),
-            customer: new CustomerData(
-                email: $validated['customer_email'] ?? null,
-                phone: $validated['customer_phone'] ?? null,
-            ),
-            declineUrl: $validated['decline_url'],
-            successUrl: $validated['success_url'],
-            webhookUrl: $validated['webhook_url'] ?? null,
+            customer: new CustomerData(email: $validated['customer_email'] ?? null),
+            declineUrl: route('payment.decline'),
+            successUrl: route('payment.success'),
+            webhookUrl: route('webhooks.liontech'),
             description: $validated['description'],
         ));
 
-        return response()->json([
-            'success' => true,
-            'order' => $order,
-        ]);
+        // Redirect customer to LionTech hosted payment page
+        return redirect($order->payUrl);
     }
 
     /**
-     * Get order details
+     * Get order status (e.g. for polling or admin panel).
      */
-    public function show(string $orderId)
+    public function show(string $orderId): JsonResponse
     {
         $order = LionTech::orders()->get($orderId);
 
         return response()->json([
-            'success' => true,
-            'order' => $order,
+            'order_id' => $order->orderId,
+            'status' => $order->status,
+            'amount' => $order->amount,
+            'paid_amount' => $order->paidAmount,
         ]);
     }
 
     /**
-     * Cancel an order
+     * Cancel an order.
      */
-    public function cancel(string $orderId)
+    public function cancel(string $orderId): JsonResponse
     {
         $order = LionTech::orders()->cancel($orderId);
 
         return response()->json([
-            'success' => true,
-            'order' => $order,
+            'order_id' => $order->orderId,
+            'status' => $order->status,
         ]);
     }
 
     /**
-     * Process a refund for a payment
+     * Refund a payment.
      */
-    public function refund(Request $request)
+    public function refund(Request $request): JsonResponse
     {
         $validated = $request->validate([
             'payment_id' => 'required|string',
@@ -88,49 +98,7 @@ class OrderController extends Controller
         ));
 
         return response()->json([
-            'success' => true,
             'refund' => $refund,
-        ]);
-    }
-
-    /**
-     * Get merchant account balances
-     */
-    public function balances()
-    {
-        $balances = LionTech::balances()->list();
-
-        return response()->json([
-            'success' => true,
-            'balances' => $balances,
-        ]);
-    }
-
-    /**
-     * List saved payment methods for a customer
-     */
-    public function savedPaymentMethods(Request $request)
-    {
-        $methods = LionTech::tokens()->list(
-            accountId: $request->query('account_id'),
-            email: $request->query('email'),
-        );
-
-        return response()->json([
-            'success' => true,
-            'methods' => $methods,
-        ]);
-    }
-
-    /**
-     * Check SDK configuration status
-     */
-    public function status()
-    {
-        return response()->json([
-            'configured' => LionTechConfig::isConfigured(),
-            'sandbox' => LionTechConfig::isSandbox(),
-            'base_url' => config('liontech.base_url'),
         ]);
     }
 }
