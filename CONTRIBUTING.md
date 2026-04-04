@@ -113,8 +113,7 @@ composer test-type-coverage
 
 ## Review Process
 
-- All pull requests require at least one review
 - CI must pass before merging
-- Maintainers will review and merge approved PRs
+- Maintainer will review and merge approved PRs
 
 Thank you for contributing!
