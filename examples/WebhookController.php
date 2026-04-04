@@ -4,22 +4,21 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Nokimaro\LionTech\Laravel\Config\LionTechConfig;
-use Nokimaro\LionTech\Laravel\Facades\LionTech;
+use Nokimaro\LionTech\Security\WebhookSignatureVerifier;
 
 class WebhookController extends Controller
 {
+    public function __construct(
+        private readonly WebhookSignatureVerifier $verifier,
+    ) {
+    }
+
     /**
      * Handle incoming LionTech webhooks
      */
     public function handle(Request $request)
     {
-        // Verify webhook signature
-        $verifier = LionTech::webhookVerifier();
-
-        $isValid = $verifier->verify($request->headers->all(), $request->getContent());
-
-        if (! $isValid) {
+        if (! $this->verifier->verify($request->headers->all(), $request->getContent())) {
             Log::warning('Invalid webhook signature received', [
                 'ip' => $request->ip(),
                 'user_agent' => $request->userAgent(),
@@ -36,7 +35,6 @@ class WebhookController extends Controller
             'event_id' => $payload['id'] ?? null,
         ]);
 
-        // Handle different event types
         return match ($eventType) {
             'payment.succeeded' => $this->handlePaymentSucceeded($payload),
             'payment.failed' => $this->handlePaymentFailed($payload),
@@ -47,17 +45,11 @@ class WebhookController extends Controller
         };
     }
 
-    /**
-     * Handle successful payment
-     */
     protected function handlePaymentSucceeded(array $payload)
     {
-        $paymentId = $payload['data']['paymentId'] ?? null;
-        $orderId = $payload['data']['orderId'] ?? null;
-
         Log::info('Payment succeeded', [
-            'payment_id' => $paymentId,
-            'order_id' => $orderId,
+            'payment_id' => $payload['data']['paymentId'] ?? null,
+            'order_id' => $payload['data']['orderId'] ?? null,
         ]);
 
         // TODO: Update your order status, send emails, etc.
@@ -68,17 +60,11 @@ class WebhookController extends Controller
         ]);
     }
 
-    /**
-     * Handle failed payment
-     */
     protected function handlePaymentFailed(array $payload)
     {
-        $paymentId = $payload['data']['paymentId'] ?? null;
-        $reason = $payload['data']['reason'] ?? 'Unknown';
-
         Log::warning('Payment failed', [
-            'payment_id' => $paymentId,
-            'reason' => $reason,
+            'payment_id' => $payload['data']['paymentId'] ?? null,
+            'reason' => $payload['data']['reason'] ?? 'Unknown',
         ]);
 
         // TODO: Notify customer, update order status, etc.
@@ -88,36 +74,24 @@ class WebhookController extends Controller
         ]);
     }
 
-    /**
-     * Handle authorized payment (requires confirmation)
-     */
     protected function handlePaymentAuthorized(array $payload)
     {
-        $paymentId = $payload['data']['paymentId'] ?? null;
-
         Log::info('Payment authorized, needs confirmation', [
-            'payment_id' => $paymentId,
+            'payment_id' => $payload['data']['paymentId'] ?? null,
         ]);
 
         // TODO: Mark order as awaiting confirmation
-        // You may want to auto-confirm or require manual confirmation
 
         return response()->json([
             'status' => 'ok',
         ]);
     }
 
-    /**
-     * Handle successful refund
-     */
     protected function handleRefundSucceeded(array $payload)
     {
-        $refundId = $payload['data']['refundId'] ?? null;
-        $paymentId = $payload['data']['paymentId'] ?? null;
-
         Log::info('Refund succeeded', [
-            'refund_id' => $refundId,
-            'payment_id' => $paymentId,
+            'refund_id' => $payload['data']['refundId'] ?? null,
+            'payment_id' => $payload['data']['paymentId'] ?? null,
         ]);
 
         // TODO: Update refund status, notify customer, etc.
@@ -127,15 +101,10 @@ class WebhookController extends Controller
         ]);
     }
 
-    /**
-     * Handle completed order
-     */
     protected function handleOrderCompleted(array $payload)
     {
-        $orderId = $payload['data']['orderId'] ?? null;
-
         Log::info('Order completed', [
-            'order_id' => $orderId,
+            'order_id' => $payload['data']['orderId'] ?? null,
         ]);
 
         // TODO: Fulfill order, send confirmation email, etc.
@@ -145,9 +114,6 @@ class WebhookController extends Controller
         ]);
     }
 
-    /**
-     * Handle unknown events
-     */
     protected function handleUnknownEvent(array $payload)
     {
         Log::notice('Unknown webhook event', [

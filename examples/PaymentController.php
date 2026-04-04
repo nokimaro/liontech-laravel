@@ -3,44 +3,68 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use LionTech\SDK\DTOs\Request\CreatePaymentRequest;
-use LionTech\SDK\DTOs\Request\CustomerData;
-use LionTech\SDK\Exceptions\ApiExceptionMapper;
-use LionTech\SDK\Exceptions\Validation\ValidationException;
-use LionTech\SDK\ValueObjects\Currency;
-use LionTech\SDK\ValueObjects\Money;
+use Nokimaro\LionTech\Exceptions\Validation\ValidationException;
+use Nokimaro\LionTech\Http\ApiExceptionMapper;
 use Nokimaro\LionTech\Laravel\Facades\LionTech;
+use Nokimaro\LionTech\Requests\CreatePaymentRequest;
+use Nokimaro\LionTech\Requests\CustomerData;
+use Nokimaro\LionTech\Security\CardEncryptor;
+use Nokimaro\LionTech\ValueObjects\Currency;
+use Nokimaro\LionTech\ValueObjects\EncryptedCardData;
+use Nokimaro\LionTech\ValueObjects\Money;
+use Nokimaro\LionTech\ValueObjects\PaymentData;
 
 class PaymentController extends Controller
 {
+    public function __construct(
+        private readonly CardEncryptor $encryptor,
+    ) {
+    }
+
     /**
-     * Create a new payment
+     * Create a new payment with card data
      */
     public function create(Request $request)
     {
         $validated = $request->validate([
-            'amount' => 'required|numeric|min:1',
+            'amount' => 'required|numeric|min:0.01',
             'order_id' => 'required|string',
             'description' => 'nullable|string',
             'customer_email' => 'required|email',
-            'return_url' => 'required|url',
+            'back_link' => 'required|url',
+            'webhook_url' => 'nullable|url',
+            'card.pan' => 'required|string',
+            'card.cvv' => 'required|string',
+            'card.exp_month' => 'required|integer|min:1|max:12',
+            'card.exp_year' => 'required|integer',
+            'card.holder' => 'required|string',
         ]);
 
         try {
-            $paymentRequest = new CreatePaymentRequest(
-                amount: new Money(amountInCents: (int) ($validated['amount'] * 100), currency: Currency::USD),
-                orderId: $validated['order_id'],
-                description: $validated['description'] ?? 'Payment',
-                returnUrl: $validated['return_url'],
-                customerData: new CustomerData(email: $validated['customer_email']),
-            );
+            $encrypted = $this->encryptor->encryptForPayment([
+                'pan' => $validated['card']['pan'],
+                'cvv' => $validated['card']['cvv'],
+                'exp_month' => $validated['card']['exp_month'],
+                'exp_year' => $validated['card']['exp_year'],
+                'cardHolder' => $validated['card']['holder'],
+            ]);
 
-            $payment = LionTech::payments()->create($paymentRequest);
+            $payment = LionTech::payments()->create(new CreatePaymentRequest(
+                amount: new Money((string) $validated['amount'], Currency::USD),
+                paymentData: PaymentData::card(new EncryptedCardData(
+                    encryptedCardData: $encrypted['encryptedCardData'],
+                    cardHolder: $validated['card']['holder'],
+                )),
+                customer: new CustomerData(email: $validated['customer_email']),
+                orderId: $validated['order_id'],
+                backLink: $validated['back_link'],
+                webhookUrl: $validated['webhook_url'] ?? null,
+                description: $validated['description'] ?? null,
+            ));
 
             return response()->json([
                 'success' => true,
                 'payment' => $payment,
-                'confirmation_url' => $payment->confirmationUrl ?? null,
             ]);
 
         } catch (ValidationException $e) {
@@ -50,7 +74,6 @@ class PaymentController extends Controller
             ], 422);
 
         } catch (\Exception $e) {
-            // Map API exceptions to appropriate exception types
             $mapped = ApiExceptionMapper::map($e);
 
             return response()->json([

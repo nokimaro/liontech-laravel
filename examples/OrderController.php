@@ -3,13 +3,13 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use LionTech\SDK\DTOs\Request\CreateOrderRequest;
-use LionTech\SDK\DTOs\Request\CreateRefundRequest;
-use LionTech\SDK\DTOs\Request\CustomerData;
-use LionTech\SDK\ValueObjects\Currency;
-use LionTech\SDK\ValueObjects\Money;
 use Nokimaro\LionTech\Laravel\Config\LionTechConfig;
 use Nokimaro\LionTech\Laravel\Facades\LionTech;
+use Nokimaro\LionTech\Requests\CreateOrderRequest;
+use Nokimaro\LionTech\Requests\CreateRefundRequest;
+use Nokimaro\LionTech\Requests\CustomerData;
+use Nokimaro\LionTech\ValueObjects\Currency;
+use Nokimaro\LionTech\ValueObjects\Money;
 
 class OrderController extends Controller
 {
@@ -23,18 +23,22 @@ class OrderController extends Controller
             'description' => 'required|string',
             'customer_email' => 'nullable|email',
             'customer_phone' => 'nullable|string',
+            'success_url' => 'required|url',
+            'decline_url' => 'required|url',
+            'webhook_url' => 'nullable|url',
         ]);
 
-        $orderRequest = new CreateOrderRequest(
-            amount: new Money(amountInCents: (int) ($validated['amount'] * 100), currency: Currency::USD),
-            description: $validated['description'],
-            customerData: new CustomerData(
+        $order = LionTech::orders()->create(new CreateOrderRequest(
+            amount: new Money((string) $validated['amount'], Currency::USD),
+            customer: new CustomerData(
                 email: $validated['customer_email'] ?? null,
                 phone: $validated['customer_phone'] ?? null,
             ),
-        );
-
-        $order = LionTech::orders()->create($orderRequest);
+            declineUrl: $validated['decline_url'],
+            successUrl: $validated['success_url'],
+            webhookUrl: $validated['webhook_url'] ?? null,
+            description: $validated['description'],
+        ));
 
         return response()->json([
             'success' => true,
@@ -69,23 +73,19 @@ class OrderController extends Controller
     }
 
     /**
-     * Process a refund for an order
+     * Process a refund for a payment
      */
-    public function refund(Request $request, string $orderId)
+    public function refund(Request $request)
     {
         $validated = $request->validate([
             'payment_id' => 'required|string',
             'amount' => 'required|numeric|min:0.01',
-            'reason' => 'nullable|string',
         ]);
 
-        $refundRequest = new CreateRefundRequest(
+        $refund = LionTech::refunds()->create(new CreateRefundRequest(
+            amount: new Money((string) $validated['amount'], Currency::USD),
             paymentId: $validated['payment_id'],
-            amount: new Money(amountInCents: (int) ($validated['amount'] * 100), currency: Currency::USD),
-            reason: $validated['reason'] ?? 'Refund request',
-        );
-
-        $refund = LionTech::refunds()->create($refundRequest);
+        ));
 
         return response()->json([
             'success' => true,
@@ -111,10 +111,10 @@ class OrderController extends Controller
      */
     public function savedPaymentMethods(Request $request)
     {
-        $accountId = $request->query('account_id');
-        $email = $request->query('email');
-
-        $methods = LionTech::tokens()->list(accountId: $accountId, email: $email);
+        $methods = LionTech::tokens()->list(
+            accountId: $request->query('account_id'),
+            email: $request->query('email'),
+        );
 
         return response()->json([
             'success' => true,
