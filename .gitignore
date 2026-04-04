@@ -33,3 +33,8 @@ Thumbs.db
 /.coverage
 /coverage/
 /coverage-html/
+
+# Local notes
+AGENTS.md
+QWEN.md
+CLAUDE.md
