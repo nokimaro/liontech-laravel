@@ -50,6 +50,10 @@ class OrderController extends Controller
             description: $validated['description'],
         ));
 
+        // Store order_id in session so PaymentResultController can verify the result
+        $request->session()
+            ->put('liontech_order_id', $order->orderId);
+
         // Redirect customer to LionTech hosted payment page
         return redirect($order->payUrl);
     }
