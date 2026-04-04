@@ -15,8 +15,6 @@ use Nokimaro\LionTech\Clients\SignatureClient;
 use Nokimaro\LionTech\Clients\TokensClient;
 use Nokimaro\LionTech\Clients\TransfersClient;
 use Nokimaro\LionTech\Http\ApiClient;
-use Nokimaro\LionTech\Security\CardEncryptor;
-use Nokimaro\LionTech\Security\WebhookSignatureVerifier;
 
 /**
  * Laravel Facade for LionTech Payment Gateway SDK.
@@ -32,8 +30,6 @@ use Nokimaro\LionTech\Security\WebhookSignatureVerifier;
  * @method static BalancesClient balances() Get the balances client
  * @method static TransfersClient transfers() Get the transfers client
  * @method static SignatureClient signature() Get the signature client
- * @method static WebhookSignatureVerifier webhookVerifier(?string $publicKeyPem = null) Get webhook signature verifier
- * @method static CardEncryptor cardEncryptor(?string $publicKeyPem = null) Get card encryptor
  * @method static ApiClient apiClient() Get the underlying API client
  *
  * @see \Nokimaro\LionTech\Client

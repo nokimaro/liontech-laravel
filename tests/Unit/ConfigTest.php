@@ -10,38 +10,11 @@ beforeEach(function (): void {
         'refresh_token' => 'test_refresh_token',
         'base_url' => 'https://api.sandbox.liontechnology.ai',
         'secure_url' => 'https://secure.sandbox.liontechnology.ai',
+        'sandbox' => false,
         'webhook_public_key' => null,
         'card_encryption_public_key' => null,
     ]);
 });
-
-it('generates correct SDK config array', function (): void {
-    $sdkConfig = LionTechConfig::toSdkConfig();
-
-    expect($sdkConfig)
-        ->toBeArray();
-    expect($sdkConfig['accessToken'])->toBe('test_access_token');
-    expect($sdkConfig['refreshToken'])->toBe('test_refresh_token');
-    expect($sdkConfig['baseUrl'])->toBe('https://api.sandbox.liontechnology.ai');
-    expect($sdkConfig['secureUrl'])->toBe('https://secure.sandbox.liontechnology.ai');
-});
-
-it('uses default URLs when not configured', function (): void {
-    $this->app->config->set('liontech', [
-        'access_token' => 'test_token',
-    ]);
-
-    $sdkConfig = LionTechConfig::toSdkConfig();
-
-    expect($sdkConfig['baseUrl'])->toBe('https://api.liontechnology.ai');
-    expect($sdkConfig['secureUrl'])->toBe('https://secure.liontechnology.ai');
-});
-
-it('throws exception when access token is missing', function (): void {
-    $this->app->config->set('liontech.access_token', null);
-
-    LionTechConfig::toSdkConfig();
-})->throws(\RuntimeException::class, 'LionTech access_token is not configured');
 
 it('returns null for webhook public key when not set', function (): void {
     $key = LionTechConfig::getWebhookPublicKey();
@@ -64,13 +37,13 @@ it('detects unconfigured SDK when access token is missing', function (): void {
     expect(LionTechConfig::isConfigured())->toBeFalse();
 });
 
-it('detects sandbox mode correctly', function (): void {
-    $this->app->config->set('liontech.base_url', 'https://api.sandbox.liontechnology.ai');
+it('detects sandbox mode when sandbox config is true', function (): void {
+    $this->app->config->set('liontech.sandbox', true);
     expect(LionTechConfig::isSandbox())->toBeTrue();
 });
 
-it('detects production mode correctly', function (): void {
-    $this->app->config->set('liontech.base_url', 'https://api.liontechnology.ai');
+it('detects production mode when sandbox config is false', function (): void {
+    $this->app->config->set('liontech.sandbox', false);
     expect(LionTechConfig::isSandbox())->toBeFalse();
 });
 
@@ -100,11 +73,13 @@ it('reads card encryption public key from file when path is provided', function 
     unlink($tempFile);
 });
 
-it('includes custom HTTP client when provided', function (): void {
-    $this->app->config->set('liontech.access_token', 'test_token');
+it('returns PEM content as-is when key is not a file path', function (): void {
+    $pemContent = '-----BEGIN PUBLIC KEY-----MIIBIjAN-----END PUBLIC KEY-----';
+    $this->app->config->set('liontech.webhook_public_key', $pemContent);
 
-    $sdkConfig = LionTechConfig::toSdkConfig();
-    expect($sdkConfig['accessToken'])->toBe('test_token');
+    $key = LionTechConfig::getWebhookPublicKey();
+    expect($key)
+        ->toBe($pemContent);
 });
 
 it('throws ErrorException when key file cannot be read', function (): void {

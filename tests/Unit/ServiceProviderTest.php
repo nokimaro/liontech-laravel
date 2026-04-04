@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use Illuminate\Contracts\Support\DeferrableProvider;
 use Nokimaro\LionTech\Client;
 use Nokimaro\LionTech\Clients\AuthClient;
 use Nokimaro\LionTech\Clients\BalancesClient;
@@ -45,40 +46,13 @@ it('registers the service provider', function (): void {
         ->toBeInstanceOf(LionTechServiceProvider::class);
 });
 
-it('returns correct list of provided services', function (): void {
+it('is not a deferred provider', function (): void {
     $provider = app()
         ->getProvider(LionTechServiceProvider::class);
 
-    $provides = $provider->provides();
-
-    expect($provides)
-        ->toBeArray();
-    expect($provides)
-        ->toHaveCount(12);
-    expect($provides)
-        ->toContain(Client::class);
-    expect($provides)
-        ->toContain(AuthClient::class);
-    expect($provides)
-        ->toContain(OrdersClient::class);
-    expect($provides)
-        ->toContain(PaymentsClient::class);
-    expect($provides)
-        ->toContain(RefundsClient::class);
-    expect($provides)
-        ->toContain(PayoutsClient::class);
-    expect($provides)
-        ->toContain(TokensClient::class);
-    expect($provides)
-        ->toContain(BalancesClient::class);
-    expect($provides)
-        ->toContain(TransfersClient::class);
-    expect($provides)
-        ->toContain(SignatureClient::class);
-    expect($provides)
-        ->toContain(WebhookSignatureVerifier::class);
-    expect($provides)
-        ->toContain(CardEncryptor::class);
+    expect($provider)
+        ->not()
+        ->toBeInstanceOf(\Illuminate\Contracts\Support\DeferrableProvider::class);
 });
 
 it('binds LionTechSDK as singleton', function (): void {

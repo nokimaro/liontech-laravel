@@ -7,36 +7,10 @@ namespace Nokimaro\LionTech\Laravel\Config;
 /**
  * Helper class to work with LionTech configuration.
  *
- * Provides static methods to access and validate the SDK configuration
- * from Laravel's config repository.
+ * Provides static methods to access and validate the SDK configuration.
  */
 final readonly class LionTechConfig
 {
-    /**
-     * Get the SDK configuration array for passing to LionTechSDK.
-     *
-     * @return array{
-     *     accessToken: string,
-     *     refreshToken: string|null,
-     *     baseUrl: string,
-     *     secureUrl: string,
-     * }
-     */
-    public static function toSdkConfig(): array
-    {
-        /** @var array{access_token?: string|null, refresh_token?: string|null, base_url?: string|null, secure_url?: string|null} $config */
-        $config = config('liontech') ?? [];
-
-        return [
-            'accessToken' => $config['access_token'] ?? throw new \RuntimeException(
-                'LionTech access_token is not configured'
-            ),
-            'refreshToken' => $config['refresh_token'] ?? null,
-            'baseUrl' => $config['base_url'] ?? 'https://api.liontechnology.ai',
-            'secureUrl' => $config['secure_url'] ?? 'https://secure.liontechnology.ai',
-        ];
-    }
-
     /**
      * Get the webhook public key path or content.
      */
@@ -82,9 +56,7 @@ final readonly class LionTechConfig
      */
     public static function isSandbox(): bool
     {
-        $baseUrl = config('liontech.base_url', '');
-
-        return is_string($baseUrl) && str_contains($baseUrl, 'sandbox');
+        return (bool) config('liontech.sandbox', false);
     }
 
     /**

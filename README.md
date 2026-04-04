@@ -43,6 +43,7 @@ LIONTECH_ACCESS_TOKEN=your_access_token_here
 LIONTECH_REFRESH_TOKEN=your_refresh_token_here
 
 # Optional: sandbox mode
+LIONTECH_SANDBOX=true
 LIONTECH_BASE_URL=https://api.sandbox.liontechnology.ai
 LIONTECH_SECURE_URL=https://secure.sandbox.liontechnology.ai
 
@@ -102,15 +103,13 @@ class PaymentController extends Controller
 ### Webhook Verification
 
 ```php
-use Nokimaro\LionTech\Laravel\Facades\LionTech;
+use Nokimaro\LionTech\Security\WebhookSignatureVerifier;
 use Illuminate\Http\Request;
 
 class WebhookController extends Controller
 {
-    public function handle(Request $request)
+    public function handle(Request $request, WebhookSignatureVerifier $verifier)
     {
-        $verifier = LionTech::webhookVerifier();
-
         if (! $verifier->verify($request->headers->all(), $request->getContent())) {
             abort(403, 'Invalid webhook signature');
         }
@@ -125,15 +124,23 @@ class WebhookController extends Controller
 ### Card Encryption
 
 ```php
-$encryptor = LionTech::cardEncryptor();
+use Nokimaro\LionTech\Security\CardEncryptor;
 
-$encrypted = $encryptor->encryptForPayment([
-    'pan' => '4405639704015096',
-    'cvv' => '123',
-    'exp_month' => 12,
-    'exp_year' => 2030,
-    'cardHolder' => 'John Doe',
-]);
+class PaymentController extends Controller
+{
+    public function __construct(private readonly CardEncryptor $encryptor) {}
+
+    public function encrypt()
+    {
+        $encrypted = $this->encryptor->encryptForPayment([
+            'pan' => '4405639704015096',
+            'cvv' => '123',
+            'exp_month' => 12,
+            'exp_year' => 2030,
+            'cardHolder' => 'John Doe',
+        ]);
+    }
+}
 ```
 
 ### Config Helper
@@ -152,6 +159,8 @@ if (LionTechConfig::isSandbox()) {
 
 ## Available Clients
 
+Access via the `LionTech` facade or dependency injection:
+
 | Method | Description |
 |--------|-------------|
 | `LionTech::auth()` | Token refresh and authentication |
@@ -163,8 +172,13 @@ if (LionTechConfig::isSandbox()) {
 | `LionTech::balances()` | Account balances |
 | `LionTech::transfers()` | Transfer operations |
 | `LionTech::signature()` | Public key retrieval |
-| `LionTech::webhookVerifier()` | Webhook signature verifier |
-| `LionTech::cardEncryptor()` | Card data encryptor |
+
+The following helpers are registered as singletons and should be used via dependency injection:
+
+| Class | Description |
+|-------|-------------|
+| `WebhookSignatureVerifier` | Webhook signature verification |
+| `CardEncryptor` | Card data encryption |
 
 For full API documentation, request/response objects, and examples see [nokimaro/liontech-php-sdk](https://github.com/nokimaro/liontech-php-sdk).
 

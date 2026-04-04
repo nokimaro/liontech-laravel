@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Nokimaro\LionTech\Laravel;
 
 use Illuminate\Container\Container;
-use Illuminate\Contracts\Support\DeferrableProvider;
 use Illuminate\Support\ServiceProvider;
 use Nokimaro\LionTech\Client;
 use Nokimaro\LionTech\Clients\AuthClient;
@@ -27,7 +26,7 @@ use Nokimaro\LionTech\Security\WebhookSignatureVerifier;
  * Registers the SDK and all its clients as singletons in the service container,
  * enabling dependency injection throughout your Laravel application.
  */
-final class LionTechServiceProvider extends ServiceProvider implements DeferrableProvider
+final class LionTechServiceProvider extends ServiceProvider
 {
     /**
      * Register any application services.
@@ -50,30 +49,6 @@ final class LionTechServiceProvider extends ServiceProvider implements Deferrabl
         $this->publishes([
             __DIR__ . '/../config/liontech.php' => config_path('liontech.php'),
         ], 'liontech-config');
-    }
-
-    /**
-     * Get the services provided by the provider.
-     *
-     * @return array<int, class-string>
-     */
-    #[\Override]
-    public function provides(): array
-    {
-        return [
-            Client::class,
-            AuthClient::class,
-            OrdersClient::class,
-            PaymentsClient::class,
-            RefundsClient::class,
-            PayoutsClient::class,
-            TokensClient::class,
-            BalancesClient::class,
-            TransfersClient::class,
-            SignatureClient::class,
-            WebhookSignatureVerifier::class,
-            CardEncryptor::class,
-        ];
     }
 
     /**

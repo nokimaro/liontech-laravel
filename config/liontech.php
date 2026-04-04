@@ -24,6 +24,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Sandbox Mode
+    |--------------------------------------------------------------------------
+    |
+    | Set to true to indicate that the package is running in sandbox mode.
+    | This is used by LionTechConfig::isSandbox() to check the current mode.
+    |
+    */
+
+    'sandbox' => env('LIONTECH_SANDBOX', false),
+
+    /*
+    |--------------------------------------------------------------------------
     | Refresh Token
     |--------------------------------------------------------------------------
     |
