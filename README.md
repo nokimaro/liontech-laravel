@@ -3,7 +3,7 @@
 [![Latest Version](https://img.shields.io/packagist/v/nokimaro/liontech-laravel?style=flat-square)](https://packagist.org/packages/nokimaro/liontech-laravel)
 [![Tests](https://img.shields.io/github/actions/workflow/status/nokimaro/liontech-laravel/ci.yml?branch=master&style=flat-square&label=tests)](https://github.com/nokimaro/liontech-laravel/actions/workflows/ci.yml)
 ![PHP](https://img.shields.io/badge/PHP-8.3%2B-777BB4?style=flat-square&logo=php)
-![Laravel](https://img.shields.io/badge/Laravel-10--13-FF2D20?style=flat-square&logo=laravel)
+![Laravel](https://img.shields.io/badge/Laravel-11--13-FF2D20?style=flat-square&logo=laravel)
 [![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE.md)
 
 Laravel integration for the [LionTech Payment Gateway](https://liontechnology.ai). Wraps [nokimaro/liontech-php-sdk](https://github.com/nokimaro/liontech-php-sdk) with a service provider, facade, and dependency injection support.
@@ -22,7 +22,7 @@ Laravel integration for the [LionTech Payment Gateway](https://liontechnology.ai
 ## Requirements
 
 - PHP 8.3 or higher
-- Laravel 10, 11, 12, or 13
+- Laravel 11, 12, or 13
 
 ## Installation
 
