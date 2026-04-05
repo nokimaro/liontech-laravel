@@ -1,6 +1,5 @@
 {
   "release-type": "simple",
-  "skip-github-release": true,
   "packages": {
     ".": {}
   },
