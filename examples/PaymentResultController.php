@@ -24,6 +24,7 @@ use Illuminate\Http\Request;
 use Illuminate\View\View;
 use Nokimaro\LionTech\Enums\OrderStatus;
 use Nokimaro\LionTech\Laravel\Facades\LionTech;
+use Nokimaro\LionTech\Responses\ResponseStatus;
 
 class PaymentResultController extends Controller
 {
@@ -47,7 +48,7 @@ class PaymentResultController extends Controller
         // Verify actual order status via API — do not trust the redirect alone
         $order = LionTech::orders()->get($orderId);
 
-        if ($order->status === OrderStatus::PAID) {
+        if ($order->status->value === OrderStatus::PAID->value) {
             return view('payment.success', [
                 'order' => $order,
             ]);

@@ -70,6 +70,7 @@ use Nokimaro\LionTech\ValueObjects\Money;
 
 $order = LionTech::orders()->create(new CreateOrderRequest(
     amount: new Money('100.00', Currency::USD),
+    description: 'Order #1234',
     successUrl: 'https://your-site.com/success',
     declineUrl: 'https://your-site.com/decline',
     webhookUrl: 'https://your-site.com/webhook',
@@ -171,7 +172,8 @@ Access via the `LionTech` facade or dependency injection:
 | `LionTech::tokens()` | Saved payment methods |
 | `LionTech::balances()` | Account balances |
 | `LionTech::transfers()` | Transfer operations |
-| `LionTech::signature()` | Public key retrieval |
+| `LionTech::signature()` | Webhook public key retrieval |
+| `LionTech::encryptionKey()` | Card encryption public key retrieval |
 
 The following helpers are registered as singletons and should be used via dependency injection:
 

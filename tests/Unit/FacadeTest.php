@@ -5,6 +5,7 @@ declare(strict_types=1);
 use Nokimaro\LionTech\Client;
 use Nokimaro\LionTech\Clients\AuthClient;
 use Nokimaro\LionTech\Clients\BalancesClient;
+use Nokimaro\LionTech\Clients\EncryptionKeyClient;
 use Nokimaro\LionTech\Clients\OrdersClient;
 use Nokimaro\LionTech\Clients\PaymentsClient;
 use Nokimaro\LionTech\Clients\PayoutsClient;
@@ -63,6 +64,10 @@ it('can access transfers client through facade', function (): void {
 
 it('can access signature client through facade', function (): void {
     expect(LionTech::signature())->toBeInstanceOf(SignatureClient::class);
+});
+
+it('can access encryption key client through facade', function (): void {
+    expect(LionTech::encryptionKey())->toBeInstanceOf(EncryptionKeyClient::class);
 });
 
 it('facade root is the same instance as container resolution', function (): void {

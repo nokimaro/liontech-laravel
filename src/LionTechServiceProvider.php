@@ -9,6 +9,7 @@ use Illuminate\Support\ServiceProvider;
 use Nokimaro\LionTech\Client;
 use Nokimaro\LionTech\Clients\AuthClient;
 use Nokimaro\LionTech\Clients\BalancesClient;
+use Nokimaro\LionTech\Clients\EncryptionKeyClient;
 use Nokimaro\LionTech\Clients\OrdersClient;
 use Nokimaro\LionTech\Clients\PaymentsClient;
 use Nokimaro\LionTech\Clients\PayoutsClient;
@@ -87,6 +88,10 @@ final class LionTechServiceProvider extends ServiceProvider
         $this->app->singleton(BalancesClient::class, fn (Container $app) => $app->make(Client::class)->balances());
         $this->app->singleton(TransfersClient::class, fn (Container $app) => $app->make(Client::class)->transfers());
         $this->app->singleton(SignatureClient::class, fn (Container $app) => $app->make(Client::class)->signature());
+        $this->app->singleton(
+            EncryptionKeyClient::class,
+            fn (Container $app) => $app->make(Client::class)->encryptionKey()
+        );
     }
 
     /**
@@ -104,7 +109,7 @@ final class LionTechServiceProvider extends ServiceProvider
 
         $this->app->singleton(CardEncryptor::class, function (Container $app): CardEncryptor {
             $publicKey = LionTechConfig::getCardEncryptionPublicKey()
-                ?? $app->make(Client::class)->signature()->getPublicKey();
+                ?? $app->make(Client::class)->encryptionKey()->getPublicKey();
 
             /** @var string $publicKey */
             return new CardEncryptor($publicKey);
