@@ -25,8 +25,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 * remove markdown heading prefix from changelog section names ([#11](https://github.com/nokimaro/liontech-laravel/issues/11)) ([6376444](https://github.com/nokimaro/liontech-laravel/commit/6376444342cd7cf881b0ca816bd7b70596505106))
 * rename release-please config to correct filename ([#9](https://github.com/nokimaro/liontech-laravel/issues/9)) ([208cd59](https://github.com/nokimaro/liontech-laravel/commit/208cd594c881f87f2029af1802bac72dd10723b6))
 
-## [Unreleased]
-
 ## [1.1.3] - 2026-04-05
 
 ### Added
