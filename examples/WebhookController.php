@@ -18,6 +18,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Nokimaro\LionTech\Security\WebhookSignatureVerifier;
+use Nokimaro\LionTech\Webhooks\WebhookPayload;
 
 class WebhookController extends Controller
 {
@@ -28,7 +29,9 @@ class WebhookController extends Controller
 
     public function handle(Request $request): JsonResponse
     {
-        if (! $this->verifier->verify($request->headers->all(), $request->getContent())) {
+        $rawBody = $request->getContent();
+
+        if (! $this->verifier->verify($request->headers->all(), $rawBody)) {
             Log::warning('Invalid LionTech webhook signature', [
                 'ip' => $request->ip(),
             ]);
@@ -36,98 +39,35 @@ class WebhookController extends Controller
             abort(403, 'Invalid signature');
         }
 
-        $payload = $request->all();
-        $eventType = $payload['type'] ?? 'unknown';
+        $webhook = WebhookPayload::fromJson($rawBody);
+
+        if ($webhook->error?->hasError()) {
+            Log::error('LionTech webhook error', [
+                'code' => $webhook->error->code,
+                'description' => $webhook->error->description,
+                'payment_id' => $webhook->payment->paymentId,
+            ]);
+
+            return response()->json([
+                'status' => 'ok',
+            ]);
+        }
+
+        $payment = $webhook->payment;
 
         Log::info('LionTech webhook received', [
-            'event_type' => $eventType,
-            'event_id' => $payload['id'] ?? null,
+            'event_type' => $webhook->type->value,
+            'payment_id' => $payment->paymentId,
+            'order_id' => $payment->orderId,
+            'status' => $payment->status->value,
         ]);
 
-        return match ($eventType) {
-            'payment.succeeded' => $this->handlePaymentSucceeded($payload),
-            'payment.failed' => $this->handlePaymentFailed($payload),
-            'payment.authorized' => $this->handlePaymentAuthorized($payload),
-            'refund.succeeded' => $this->handleRefundSucceeded($payload),
-            'order.completed' => $this->handleOrderCompleted($payload),
-            default => $this->handleUnknownEvent($eventType),
-        };
-    }
-
-    protected function handlePaymentSucceeded(array $payload): JsonResponse
-    {
-        // TODO: Update your order status, send confirmation email, etc.
-        // Event::dispatch(new PaymentSucceeded($payload['data']['paymentId'], $payload['data']['orderId']));
-
-        Log::info('Payment succeeded', [
-            'payment_id' => $payload['data']['paymentId'] ?? null,
-            'order_id' => $payload['data']['orderId'] ?? null,
-        ]);
-
-        return response()->json([
-            'status' => 'ok',
-        ]);
-    }
-
-    protected function handlePaymentFailed(array $payload): JsonResponse
-    {
-        // TODO: Notify customer, update order status, etc.
-
-        Log::warning('Payment failed', [
-            'payment_id' => $payload['data']['paymentId'] ?? null,
-            'reason' => $payload['data']['reason'] ?? 'Unknown',
-        ]);
-
-        return response()->json([
-            'status' => 'ok',
-        ]);
-    }
-
-    protected function handlePaymentAuthorized(array $payload): JsonResponse
-    {
-        // TODO: Mark order as awaiting confirmation, or auto-confirm via payments()->confirm()
-
-        Log::info('Payment authorized, needs confirmation', [
-            'payment_id' => $payload['data']['paymentId'] ?? null,
-        ]);
-
-        return response()->json([
-            'status' => 'ok',
-        ]);
-    }
-
-    protected function handleRefundSucceeded(array $payload): JsonResponse
-    {
-        // TODO: Update refund status, notify customer, etc.
-
-        Log::info('Refund succeeded', [
-            'refund_id' => $payload['data']['refundId'] ?? null,
-            'payment_id' => $payload['data']['paymentId'] ?? null,
-        ]);
-
-        return response()->json([
-            'status' => 'ok',
-        ]);
-    }
-
-    protected function handleOrderCompleted(array $payload): JsonResponse
-    {
-        // TODO: Fulfill order, send confirmation email, etc.
-
-        Log::info('Order completed', [
-            'order_id' => $payload['data']['orderId'] ?? null,
-        ]);
-
-        return response()->json([
-            'status' => 'ok',
-        ]);
-    }
-
-    protected function handleUnknownEvent(string $eventType): JsonResponse
-    {
-        Log::notice('Unknown LionTech webhook event type', [
-            'type' => $eventType,
-        ]);
+        if ($payment->isSuccessful()) {
+            // TODO: fulfil the order, send confirmation email, etc.
+            // Event::dispatch(new PaymentSucceeded($payment->paymentId, $payment->orderId));
+        } elseif ($payment->isDeclined()) {
+            // TODO: notify customer, mark order as failed, etc.
+        }
 
         return response()->json([
             'status' => 'ok',

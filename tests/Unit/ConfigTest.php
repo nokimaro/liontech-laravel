@@ -94,9 +94,9 @@ it('returns PEM content as-is when key is not a file path', function (): void {
         ->toBe($pemContent);
 });
 
-it('returns empty string when key config value is empty string', function (): void {
+it('returns null when key config value is empty string', function (): void {
     $this->app->config->set('liontech.webhook_public_key', '');
-    expect(LionTechConfig::getWebhookPublicKey())->toBe('');
+    expect(LionTechConfig::getWebhookPublicKey())->toBeNull();
 });
 
 it('throws ErrorException when key file cannot be read', function (): void {
