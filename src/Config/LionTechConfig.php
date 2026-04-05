@@ -19,7 +19,7 @@ final readonly class LionTechConfig
         /** @var string|null $key */
         $key = config('liontech.webhook_public_key');
 
-        if ($key === null) {
+        if ($key === null || $key === '') {
             return null;
         }
 
@@ -34,7 +34,7 @@ final readonly class LionTechConfig
         /** @var string|null $key */
         $key = config('liontech.card_encryption_public_key');
 
-        if ($key === null) {
+        if ($key === null || $key === '') {
             return null;
         }
 
