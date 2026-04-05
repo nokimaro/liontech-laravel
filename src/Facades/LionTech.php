@@ -7,6 +7,7 @@ namespace Nokimaro\LionTech\Laravel\Facades;
 use Illuminate\Support\Facades\Facade;
 use Nokimaro\LionTech\Clients\AuthClient;
 use Nokimaro\LionTech\Clients\BalancesClient;
+use Nokimaro\LionTech\Clients\EncryptionKeyClient;
 use Nokimaro\LionTech\Clients\OrdersClient;
 use Nokimaro\LionTech\Clients\PaymentsClient;
 use Nokimaro\LionTech\Clients\PayoutsClient;
@@ -30,6 +31,7 @@ use Nokimaro\LionTech\Http\ApiClient;
  * @method static BalancesClient balances() Get the balances client
  * @method static TransfersClient transfers() Get the transfers client
  * @method static SignatureClient signature() Get the signature client
+ * @method static EncryptionKeyClient encryptionKey() Get the encryption key client
  * @method static ApiClient apiClient() Get the underlying API client
  *
  * @see \Nokimaro\LionTech\Client

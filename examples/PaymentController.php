@@ -24,8 +24,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Nokimaro\LionTech\Exceptions\SdkException;
 use Nokimaro\LionTech\Exceptions\Validation\ValidationException;
-use Nokimaro\LionTech\Http\ApiExceptionMapper;
 use Nokimaro\LionTech\Laravel\Facades\LionTech;
 use Nokimaro\LionTech\Requests\CreatePaymentRequest;
 use Nokimaro\LionTech\Requests\CustomerData;
@@ -91,12 +91,10 @@ class PaymentController extends Controller
                 'errors' => $e->getErrors(),
             ], 422);
 
-        } catch (\Exception $e) {
-            $mapped = ApiExceptionMapper::map($e);
-
+        } catch (SdkException $e) {
             return response()->json([
                 'success' => false,
-                'error' => $mapped->getMessage(),
+                'error' => $e->getMessage(),
             ], 500);
         }
     }

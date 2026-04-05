@@ -126,17 +126,17 @@ it('falls back to SDK signature client when config keys are null', function (): 
     app()
         ->forgetInstance(Client::class);
 
-    // Set config keys to null to trigger fallback
+    // Set config keys to null to trigger fallback: SDK fetches public key from API
     app()
         ->config->set('liontech.webhook_public_key', null);
     app()
         ->config->set('liontech.card_encryption_public_key', null);
 
-    // This will trigger the fallback path calling signature()->getPublicKey()
-    // which makes an HTTP call. The call will fail (no real API), but lines 122/129
-    // in the service provider will be executed (coverage).
     $verifier = app(WebhookSignatureVerifier::class);
-})->throws(\JsonException::class);
+
+    expect($verifier)
+        ->toBeInstanceOf(WebhookSignatureVerifier::class);
+});
 
 it('falls back to SDK signature client for CardEncryptor when config key is null', function (): void {
     // Clear any previously resolved instances
@@ -147,11 +147,12 @@ it('falls back to SDK signature client for CardEncryptor when config key is null
     app()
         ->forgetInstance(Client::class);
 
-    // Set config key to null to trigger fallback
+    // Set config key to null to trigger fallback: SDK fetches public key from API
     app()
         ->config->set('liontech.card_encryption_public_key', null);
 
-    // This will trigger the fallback path calling signature()->getPublicKey()
-    // for CardEncryptor (line 129 in service provider)
     $encryptor = app(CardEncryptor::class);
-})->throws(\JsonException::class);
+
+    expect($encryptor)
+        ->toBeInstanceOf(CardEncryptor::class);
+});

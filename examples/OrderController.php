@@ -43,11 +43,11 @@ class OrderController extends Controller
 
         $order = LionTech::orders()->create(new CreateOrderRequest(
             amount: new Money((string) $validated['amount'], Currency::USD),
+            description: $validated['description'],
             customer: new CustomerData(email: $validated['customer_email'] ?? null),
             declineUrl: route('payment.decline'),
             successUrl: route('payment.success'),
             webhookUrl: route('webhooks.liontech'),
-            description: $validated['description'],
         ));
 
         // Store order_id in session so PaymentResultController can verify the result
@@ -99,6 +99,7 @@ class OrderController extends Controller
         $refund = LionTech::refunds()->create(new CreateRefundRequest(
             amount: new Money((string) $validated['amount'], Currency::USD),
             paymentId: $validated['payment_id'],
+            webhookUrl: route('webhooks.liontech'),
         ));
 
         return response()->json([

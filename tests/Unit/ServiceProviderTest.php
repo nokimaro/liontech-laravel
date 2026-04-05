@@ -6,6 +6,7 @@ use Illuminate\Contracts\Support\DeferrableProvider;
 use Nokimaro\LionTech\Client;
 use Nokimaro\LionTech\Clients\AuthClient;
 use Nokimaro\LionTech\Clients\BalancesClient;
+use Nokimaro\LionTech\Clients\EncryptionKeyClient;
 use Nokimaro\LionTech\Clients\OrdersClient;
 use Nokimaro\LionTech\Clients\PaymentsClient;
 use Nokimaro\LionTech\Clients\PayoutsClient;
@@ -82,6 +83,7 @@ it('binds individual clients as singletons', function (): void {
         BalancesClient::class,
         TransfersClient::class,
         SignatureClient::class,
+        EncryptionKeyClient::class,
     ];
 
     foreach ($clients as $client) {
@@ -189,4 +191,6 @@ it('can access clients through SDK', function (): void {
         ->toBeInstanceOf(TransfersClient::class);
     expect($sdk->signature())
         ->toBeInstanceOf(SignatureClient::class);
+    expect($sdk->encryptionKey())
+        ->toBeInstanceOf(EncryptionKeyClient::class);
 });
